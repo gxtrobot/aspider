@@ -20,7 +20,8 @@ develop-eggs
 .installed.cfg
 lib
 lib64
-
+*.swp
+*.log
 # Installer logs
 pip-log.txt
 
