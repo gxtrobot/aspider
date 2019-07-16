@@ -1,0 +1,176 @@
+python3 example/bus_spider.py https://www.cdnbus.bid
+verify page /page/8 , args 8
+verify page /page/3 , args 3
+verify page /page/10 , args 10
+verify page /page/7 , args 7
+verify page /page/9 , args 9
+verify page /page/4 , args 4
+verify page /page/6 , args 6
+verify page /page/1 , args 1
+verify page /page/2 , args 2
+verify page /page/5 , args 5
+process item TIKB-048
+process item GTJ-072
+process item VEC-371
+process item ONSG-013
+page 8 has length 58969
+process page 8
+verify page /page/11 , args 11
+verify page /page/12 , args 12
+verify page /page/13 , args 13
+process item TIKP-035
+process item MMKS-007
+process item OYC-264
+process item ATOM-383
+process item SABA-537
+process item MRSS-071
+process item TIKF-035
+page 3 has length 60273
+process page 3
+process item HOKS-036
+process item SABA-539
+process item JJBK-022
+process item TIKC-035
+process item GDHH-159
+page 10 has length 57453
+process page 10
+verify page /page/15 , args 15
+verify page /page/14 , args 14
+process item HTMS-127
+process item TURU-049
+process item SABA-538
+process item TURA-390
+page 4 has length 57721
+process page 4
+page 9 has length 58213
+process page 9
+page 6 has length 59396
+process page 6
+
+Interrupted
+
+*** Report ***
+https://www.cdnbus.bid 200 text/html UTF-8 66706 61/62
+https://www.cdnbus.bid/ 200 text/html UTF-8 66706 0/61
+https://www.cdnbus.bid/ATOM-383 200 text/html UTF-8 50506 17/40
+https://www.cdnbus.bid/GDHH-159 200 text/html UTF-8 54927 13/39
+https://www.cdnbus.bid/GTJ-072 200 text/html UTF-8 43903 19/42
+https://www.cdnbus.bid/HOKS-036 200 text/html UTF-8 43882 16/41
+https://www.cdnbus.bid/HTMS-127 200 text/html UTF-8 46527 16/43
+https://www.cdnbus.bid/JJBK-022 200 text/html UTF-8 49292 15/39
+https://www.cdnbus.bid/MMKS-007 200 text/html UTF-8 49861 16/39
+https://www.cdnbus.bid/MRSS-071 200 text/html UTF-8 52233 14/40
+https://www.cdnbus.bid/ONSG-013 200 text/html UTF-8 49538 15/40
+https://www.cdnbus.bid/OYC-264 200 text/html UTF-8 50699 16/39
+https://www.cdnbus.bid/SABA-537 200 text/html UTF-8 57179 18/40
+https://www.cdnbus.bid/SABA-538 200 text/html UTF-8 52477 10/38
+https://www.cdnbus.bid/SABA-539 200 text/html UTF-8 53126 11/38
+https://www.cdnbus.bid/TIKB-048 200 text/html UTF-8 46800 17/35
+https://www.cdnbus.bid/TIKC-035 200 text/html UTF-8 47698 9/36
+https://www.cdnbus.bid/TIKF-035 200 text/html UTF-8 46671 8/36
+https://www.cdnbus.bid/TIKP-035 200 text/html UTF-8 48594 12/38
+https://www.cdnbus.bid/TURA-390 200 text/html UTF-8 52563 12/39
+https://www.cdnbus.bid/TURU-049 200 text/html UTF-8 45768 14/37
+https://www.cdnbus.bid/VEC-371 200 text/html UTF-8 44493 18/42
+https://www.cdnbus.bid/page/1 301 redirect https://www.cdnbus.bid
+https://www.cdnbus.bid/page/10 200 text/html UTF-8 64016 35/61
+https://www.cdnbus.bid/page/3 200 text/html UTF-8 69330 33/61
+https://www.cdnbus.bid/page/4 200 text/html UTF-8 63614 33/61
+https://www.cdnbus.bid/page/6 200 text/html UTF-8 66059 33/61
+https://www.cdnbus.bid/page/8 200 text/html UTF-8 65176 36/61
+https://www.cdnbus.bid/page/9 200 text/html UTF-8 64584 33/61
+Finished 29 urls in 4.094 secs (max_tasks=10) (0.708 urls/sec/task)
+        28 html
+   1512928 html_bytes
+         1 redirect
+Todo: 301
+Done: 29
+Date: Tue Jul 16 22:37:58 2019 local time
+ERROR:asyncio:Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x110bdc5c0>
+ERROR:asyncio:Task was destroyed but it is pending!
+task: <Task pending coro=<Crawler.work() running at /Users/lujun/dev/aspider/aspider/crawling.py:257> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x110bc9eb8>()]>>
+ERROR:asyncio:Task was destroyed but it is pending!
+task: <Task pending coro=<Crawler.work() running at /Users/lujun/dev/aspider/aspider/crawling.py:257> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x110de0828>()]>>
+ERROR:asyncio:Task was destroyed but it is pending!
+task: <Task pending coro=<Crawler.work() running at /Users/lujun/dev/aspider/aspider/crawling.py:257> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x110bc9768>()]>>
+ERROR:asyncio:Task was destroyed but it is pending!
+task: <Task pending coro=<Crawler.work() running at /Users/lujun/dev/aspider/aspider/crawling.py:257> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x110bc9f48>()]>>
+ERROR:asyncio:Task was destroyed but it is pending!
+task: <Task pending coro=<Crawler.work() running at /Users/lujun/dev/aspider/aspider/crawling.py:257> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x110bc9888>()]>>
+ERROR:asyncio:Task was destroyed but it is pending!
+task: <Task pending coro=<Crawler.work() running at /Users/lujun/dev/aspider/aspider/crawling.py:257> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x110bc9df8>()]>>
+ERROR:asyncio:Task was destroyed but it is pending!
+task: <Task pending coro=<Crawler.work() running at /Users/lujun/dev/aspider/aspider/crawling.py:257> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x110bc9678>()]>>
+ERROR:asyncio:Task was destroyed but it is pending!
+task: <Task pending coro=<Crawler.work() running at /Users/lujun/dev/aspider/aspider/crawling.py:257> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x110bc9468>()]>>
+ERROR:asyncio:Task was destroyed but it is pending!
+task: <Task pending coro=<Crawler.work() running at /Users/lujun/dev/aspider/aspider/crawling.py:257> wait_for=<Future pending cb=[BaseSelectorEventLoop._sock_connect_done(19)(), <TaskWakeupMethWrapper object at 0x110de0558>()]>>
+ERROR:asyncio:Task was destroyed but it is pending!
+task: <Task pending coro=<Crawler.work() running at /Users/lujun/dev/aspider/aspider/crawling.py:257> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x110bc9dc8>()]>>
+Exception ignored in: <generator object Crawler.work at 0x110bae888>
+Traceback (most recent call last):
+  File "/Users/lujun/dev/aspider/aspider/crawling.py", line 257, in work
+    yield from self.fetch(url, max_redirect)
+  File "/Users/lujun/dev/aspider/aspider/crawling.py", line 190, in fetch
+    url, allow_redirects=False)
+  File "/Users/lujun/dev/aspider/.venv/lib/python3.6/site-packages/aiohttp/client.py", line 476, in _request
+    timeout=real_timeout
+  File "/Users/lujun/dev/aspider/.venv/lib/python3.6/site-packages/aiohttp/connector.py", line 522, in connect
+    proto = await self._create_connection(req, traces, timeout)
+  File "/Users/lujun/dev/aspider/.venv/lib/python3.6/site-packages/aiohttp/connector.py", line 854, in _create_connection
+    req, traces, timeout)
+  File "/Users/lujun/dev/aspider/.venv/lib/python3.6/site-packages/aiohttp/connector.py", line 974, in _create_direct_connection
+    req=req, client_error=client_error)
+  File "/Users/lujun/dev/aspider/.venv/lib/python3.6/site-packages/aiohttp/connector.py", line 924, in _wrap_create_connection
+    await self._loop.create_connection(*args, **kwargs))
+  File "/Users/lujun/.pyenv/versions/3.6.4/lib/python3.6/asyncio/base_events.py", line 803, in create_connection
+    sock, protocol_factory, ssl, server_hostname)
+  File "/Users/lujun/.pyenv/versions/3.6.4/lib/python3.6/asyncio/base_events.py", line 831, in _create_connection_transport
+    transport.close()
+  File "/Users/lujun/.pyenv/versions/3.6.4/lib/python3.6/asyncio/sslproto.py", line 325, in close
+    self._ssl_protocol._start_shutdown()
+  File "/Users/lujun/.pyenv/versions/3.6.4/lib/python3.6/asyncio/sslproto.py", line 553, in _start_shutdown
+    self._abort()
+  File "/Users/lujun/.pyenv/versions/3.6.4/lib/python3.6/asyncio/sslproto.py", line 695, in _abort
+    self._transport.abort()
+  File "/Users/lujun/.pyenv/versions/3.6.4/lib/python3.6/asyncio/selector_events.py", line 602, in abort
+    self._force_close(None)
+  File "/Users/lujun/.pyenv/versions/3.6.4/lib/python3.6/asyncio/selector_events.py", line 657, in _force_close
+    self._loop.call_soon(self._call_connection_lost, exc)
+  File "/Users/lujun/.pyenv/versions/3.6.4/lib/python3.6/asyncio/base_events.py", line 574, in call_soon
+    self._check_closed()
+  File "/Users/lujun/.pyenv/versions/3.6.4/lib/python3.6/asyncio/base_events.py", line 357, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+ERROR:asyncio:Fatal write error on socket transport
+protocol: <asyncio.sslproto.SSLProtocol object at 0x110de5908>
+transport: <_SelectorSocketTransport fd=14>
+Traceback (most recent call last):
+  File "/Users/lujun/.pyenv/versions/3.6.4/lib/python3.6/asyncio/selector_events.py", line 761, in write
+    n = self._sock.send(data)
+OSError: [Errno 9] Bad file descriptor
+ERROR:asyncio:Fatal error on SSL transport
+protocol: <asyncio.sslproto.SSLProtocol object at 0x110de5908>
+transport: <_SelectorSocketTransport closing fd=14>
+Traceback (most recent call last):
+  File "/Users/lujun/.pyenv/versions/3.6.4/lib/python3.6/asyncio/selector_events.py", line 761, in write
+    n = self._sock.send(data)
+OSError: [Errno 9] Bad file descriptor
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/lujun/.pyenv/versions/3.6.4/lib/python3.6/asyncio/sslproto.py", line 646, in _process_write_backlog
+    self._transport.write(chunk)
+  File "/Users/lujun/.pyenv/versions/3.6.4/lib/python3.6/asyncio/selector_events.py", line 765, in write
+    self._fatal_error(exc, 'Fatal write error on socket transport')
+  File "/Users/lujun/.pyenv/versions/3.6.4/lib/python3.6/asyncio/selector_events.py", line 645, in _fatal_error
+    self._force_close(exc)
+  File "/Users/lujun/.pyenv/versions/3.6.4/lib/python3.6/asyncio/selector_events.py", line 657, in _force_close
+    self._loop.call_soon(self._call_connection_lost, exc)
+  File "/Users/lujun/.pyenv/versions/3.6.4/lib/python3.6/asyncio/base_events.py", line 574, in call_soon
+    self._check_closed()
+  File "/Users/lujun/.pyenv/versions/3.6.4/lib/python3.6/asyncio/base_events.py", line 357, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
