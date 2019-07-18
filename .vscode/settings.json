@@ -1,3 +1,10 @@
 {
-    "python.pythonPath": "/Users/lujun/dev/aspider/.venv/bin/python3"
+    "python.pythonPath": ".venv/bin/python",
+    "python.testing.pytestArgs": [
+        "-v",
+        "-s"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.pytestEnabled": true
 }

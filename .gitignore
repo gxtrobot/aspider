@@ -28,6 +28,7 @@ pip-log.txt
 # Unit test / coverage reports
 .coverage
 .tox
+.pytest_cache
 nosetests.xml
 
 # Complexity
@@ -37,5 +38,11 @@ output/*/index.html
 # Sphinx
 docs/_build
 
+# venv
+.venv/
+
 # Cookiecutter
 output/
+
+# vscode
+.vscode
