@@ -1,7 +1,7 @@
 '''
 html parser to extract data
 '''
-
+import re
 from collections import namedtuple
 from requests_html import HTML
 
@@ -25,16 +25,16 @@ def parse_item(text):
     cover_img_url = html.find(cover_img_css)[0].attrs['href']
     tags_css = 'body > div.container > div.row.movie > div.col-md-3.info'
     tags = html.find(tags_css)[0].find('p')
-    release_date = tags[1].text
+    add_date = tags[1].text
     length = tags[2].text
     # meta data
     meta = {}
-    meta['title'] = title
+    meta['fanhao'], meta['title'] = title.split(maxsplit=1)
     meta['cover_img_url'] = cover_img_url
-    meta['release_date'] = release_date
-    meta['length'] = length
+    meta['add_date'] = add_date.split()[1]
+    meta['length'] = re.search(r'\d+', length).group()
 
-    tags = []
+    tag_list = []
     for tag in tags[3:]:
         tag_type = ''
         tag_value = ''
@@ -54,5 +54,6 @@ def parse_item(text):
             tag_type = 'genre'
         if 'star' in tag_link:
             tag_type = 'star'
-        tags.append(Tag(tag_type, tag_value, tag_link))
-    return meta, tags
+        if tag_type != '' and tag_value != '':
+            tag_list.append(Tag(tag_type, tag_value, tag_link))
+    return meta, tag_list

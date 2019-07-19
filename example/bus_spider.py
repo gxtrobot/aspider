@@ -4,6 +4,7 @@ define url routing process logic
 import sys
 from aspider.routeing import get_router
 from parser import parse_item
+from db import save
 router = get_router()
 counter = 0
 
@@ -18,7 +19,7 @@ def verify_page_path(path, no):
 
 
 def check_exit():
-    if counter > 10:
+    if counter > 100:
         raise KeyboardInterrupt()
 
 
@@ -32,18 +33,19 @@ def process_page(text, path, no):
 
 
 @router.route('/<fanhao:[\w]+-[\d]+>')
-def process_item(text, fanhao):
+def process_item(text, path, fanhao):
     '''
     process item page
     '''
     global counter
     counter += 1
     print(f'process item {fanhao}')
-
+    url = router.get_full_url(path)
     meta, tags = parse_item(text)
+    meta.update(url=url)
     print('meta keys', len(meta.keys()))
     print('tag count', len(tags))
-
+    save(meta, tags)
     check_exit()
 
 
