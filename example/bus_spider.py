@@ -2,11 +2,21 @@
 define url routing process logic
 '''
 import sys
+import os
+import signal
 from aspider.routeing import get_router
 from parser import parse_item
 from db import save
 router = get_router()
 counter = 0
+SYSTEM_EXIT = False
+
+
+def system_exit():
+    global SYSTEM_EXIT
+    if not SYSTEM_EXIT:
+        SYSTEM_EXIT = True
+        raise KeyboardInterrupt()
 
 
 def verify_page_path(path, no):
@@ -19,8 +29,8 @@ def verify_page_path(path, no):
 
 
 def check_exit():
-    if counter > 100:
-        raise KeyboardInterrupt()
+    if counter > 10 and not SYSTEM_EXIT:
+        system_exit()
 
 
 @router.route('/page/<no>', verify_page_path)

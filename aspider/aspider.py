@@ -66,7 +66,6 @@ def main():
     if not args.roots:
         print('Use --help for command line help')
         return
-
     levels = [logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG]
     logging.basicConfig(level=levels[min(args.level, len(levels)-1)])
 
@@ -96,16 +95,22 @@ def main():
     try:
         loop.run_until_complete(crawler.crawl())  # Crawler gonna crawl.
     except KeyboardInterrupt:
-        sys.stderr.flush()
+        # sys.stderr.flush()
         print('\nInterrupted\n')
-    finally:
-        reporting.report(crawler)
 
+    finally:
         # next two lines are required for actual aiohttp resource cleanup
         loop.stop()
-        loop.run_forever()
-
-        loop.close()
+        # Find all running tasks:
+        pending = asyncio.Task.all_tasks()
+        # Run loop until tasks done:
+        try:
+            loop.run_until_complete(asyncio.gather(*pending))
+            print('finished')
+        except:
+            pass
+        finally:
+            reporting.report(crawler)
 
 
 if __name__ == '__main__':

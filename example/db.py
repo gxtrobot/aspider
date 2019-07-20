@@ -15,8 +15,10 @@ class BaseModel(Model):
         database = db
         legacy_table_names = False
 
+
 class ExistError(Exception):
     pass
+
 
 class Item(BaseModel):
     '''
@@ -62,10 +64,10 @@ class Tag(BaseModel):
     def saveit(tag_info):
         try:
             tag = Tag.create(type_=tag_info.type, value=tag_info.value,
-                                url=tag_info.link)
+                             url=tag_info.link)
             logger.debug(f'save tag:  {tag}')
         except IntegrityError as ex:
-            tag = Tag.get(Tag.value==tag_info.value)
+            tag = Tag.get(Tag.value == tag_info.value)
 
         return tag
 
@@ -89,10 +91,11 @@ class ItemTag(BaseModel):
 
 
 def save(meta_info, tags):
+    item_title = meta_info['title']
     try:
         item = Item.saveit(meta_info)
     except ExistError:
-        logger.debug('item exists: {item_title}')
+        logger.debug(f'item exists: {item_title}')
     else:
         for tag_info in tags:
             tag = Tag.saveit(tag_info)
