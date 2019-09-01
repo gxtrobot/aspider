@@ -9,7 +9,7 @@ import argparse
 import asyncio
 import logging
 import sys
-
+import nest_asyncio
 from . import crawling
 from . import reporting
 from . import routeing
@@ -57,11 +57,16 @@ def fix_url(url):
     return url
 
 
-def main():
+def exception_handler(loop, context):
+    print("")
+
+
+def main(loop=None):
     """Main program.
 
     Parse arguments, set up event loop, run crawler, print report.
     """
+    out_loop = True if loop else False
     args = ARGS.parse_args()
     if not args.roots:
         print('Use --help for command line help')
@@ -73,17 +78,21 @@ def main():
     router = routeing.get_router()
     router.add_root_path(root_path)
     logging.debug(f'set up router with root_path {root_path}')
-    if args.iocp:
-        from asyncio.windows_events import ProactorEventLoop
-        loop = ProactorEventLoop()
-        asyncio.set_event_loop(loop)
-    elif args.select:
-        loop = asyncio.SelectorEventLoop()
-        asyncio.set_event_loop(loop)
-    else:
-        loop = asyncio.get_event_loop()
+    if not loop:
+        if args.iocp:
+            from asyncio.windows_events import ProactorEventLoop
+            loop = ProactorEventLoop()
+            asyncio.set_event_loop(loop)
+        elif args.select:
+            loop = asyncio.SelectorEventLoop()
+            asyncio.set_event_loop(loop)
+        else:
+            loop = asyncio.get_event_loop()
+
+    loop.set_exception_handler(exception_handler)
 
     roots = {fix_url(root) for root in args.roots}
+    # nest_asyncio.apply(loop)
 
     crawler = crawling.Crawler(roots,
                                exclude=args.exclude,
@@ -91,26 +100,28 @@ def main():
                                max_redirect=args.max_redirect,
                                max_tries=args.max_tries,
                                max_tasks=args.max_tasks,
+                               loop=loop
                                )
     try:
-        loop.run_until_complete(crawler.crawl())  # Crawler gonna crawl.
+        print(f'out_loop:{out_loop}')
+        if out_loop:
+            asyncio.ensure_future(crawler.crawl(), loop=loop)
+        else:
+            loop.run_until_complete(crawler.crawl())  # Crawler gonna crawl.
     except KeyboardInterrupt:
         # sys.stderr.flush()
         print('\nInterrupted\n')
-
-    finally:
-        # next two lines are required for actual aiohttp resource cleanup
-        loop.stop()
-        # Find all running tasks:
-        pending = asyncio.Task.all_tasks()
-        # Run loop until tasks done:
+        pending = asyncio.all_tasks(loop)
+        for task in pending:
+            task.cancel()
         try:
-            loop.run_until_complete(asyncio.gather(*pending))
-            print('finished')
+            loop.run_until_complete(asyncio.gather(
+                *pending, loop=loop, return_exceptions=True))
         except:
             pass
-        finally:
-            reporting.report(crawler)
+    finally:
+        reporting.report(crawler)
+        print('ALL DONE')
 
 
 if __name__ == '__main__':

@@ -245,6 +245,7 @@ class Crawler:
                         self.q.put_nowait((link, self.max_redirect))
                 self.seen_urls.update(links)
         finally:
+            yield from asyncio.sleep(1)
             yield from response.release()
 
     @asyncio.coroutine
@@ -253,11 +254,12 @@ class Crawler:
         try:
             while True:
                 url, max_redirect = yield from self.q.get()
+                print(f'work on url {url}')
                 assert url in self.seen_urls
                 yield from self.fetch(url, max_redirect)
                 self.q.task_done()
         except asyncio.CancelledError:
-            pass
+            LOGGER.warning('canceling the crawler')
 
     def url_allowed(self, url):
         if self.exclude and re.search(self.exclude, url):
@@ -279,15 +281,21 @@ class Crawler:
         LOGGER.debug('adding %r %r', url, max_redirect)
         self.seen_urls.add(url)
         self.q.put_nowait((url, max_redirect))
+        print(self.q)
 
     @asyncio.coroutine
     def crawl(self):
         """Run the crawler until all finished."""
-        workers = [asyncio.Task(self.work(), loop=self.loop)
-                   for _ in range(self.max_tasks)]
-        self.t0 = time.time()
-        yield from self.q.join()
-        self.t1 = time.time()
-        for w in workers:
-            w.cancel()
-        yield from self.close()
+        try:
+            workers = [asyncio.Task(self.work(), loop=self.loop)
+                       for _ in range(self.max_tasks)]
+            self.t0 = time.time()
+            yield from self.q.join()
+            self.t1 = time.time()
+            for w in workers:
+                w.cancel()
+        except asyncio.CancelledError:
+            LOGGER.warning('canceling the crawler')
+        finally:
+            LOGGER.warning('closing the crawler')
+            yield from self.close()
