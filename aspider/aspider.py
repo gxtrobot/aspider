@@ -58,8 +58,27 @@ def fix_url(url):
 
 
 def exception_handler(loop, context):
-    print("")
+    # first, handle with default handler
+    loop.default_exception_handler(context)
+    print('handle exception')
+    exception = context.get('exception')
+    errors = (KeyboardInterrupt, ReachCountExit)
+    if isinstance(exception, errors):
+        print(context)
+        print('now exit loop')
+        pending = asyncio.all_tasks(loop)
+        for task in pending:
+            task.cancel()
+        try:
+            loop.run_until_complete(asyncio.gather(
+                *pending, loop=loop, return_exceptions=True))
+        except:
+            pass
 
+async def do_async_report(router, crawler):
+    await router.quit_event.wait()
+    await asyncio.sleep(1)
+    reporting.report(crawler)
 
 def main(loop=None):
     """Main program.
@@ -76,6 +95,8 @@ def main(loop=None):
 
     root_path = args.roots[0]
     router = routeing.get_router()
+    logging.debug('resume the loop')
+    router.resume(loop)
     router.add_root_path(root_path)
     logging.debug(f'set up router with root_path {root_path}')
     if not loop:
@@ -102,26 +123,18 @@ def main(loop=None):
                                max_tasks=args.max_tasks,
                                loop=loop
                                )
-    try:
-        print(f'out_loop:{out_loop}')
-        if out_loop:
-            asyncio.ensure_future(crawler.crawl(), loop=loop)
-        else:
-            loop.run_until_complete(crawler.crawl())  # Crawler gonna crawl.
-    except KeyboardInterrupt:
-        # sys.stderr.flush()
-        print('\nInterrupted\n')
-        pending = asyncio.all_tasks(loop)
-        for task in pending:
-            task.cancel()
+    if out_loop:
+        asyncio.ensure_future(crawler.crawl(), loop=loop)
+        asyncio.ensure_future(do_async_report(router, crawler), loop=loop)
+    else:
         try:
-            loop.run_until_complete(asyncio.gather(
-                *pending, loop=loop, return_exceptions=True))
-        except:
+            loop.run_until_complete(crawler.crawl())  # Crawler gonna crawl.
+        except KeyboardInterrupt:
+            # sys.stderr.flush()
             pass
-    finally:
-        reporting.report(crawler)
-        print('ALL DONE')
+        finally:
+            reporting.report(crawler)
+            print('ALL DONE NOW')
 
 
 if __name__ == '__main__':

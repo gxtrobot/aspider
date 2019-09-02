@@ -252,14 +252,14 @@ class Crawler:
     def work(self):
         """Process queue items forever."""
         try:
-            while True:
+            while router.is_running():
                 url, max_redirect = yield from self.q.get()
                 print(f'work on url {url}')
                 assert url in self.seen_urls
                 yield from self.fetch(url, max_redirect)
                 self.q.task_done()
         except asyncio.CancelledError:
-            LOGGER.warning('canceling the crawler')
+            LOGGER.warning('canceling the worker')
 
     def url_allowed(self, url):
         if self.exclude and re.search(self.exclude, url):
@@ -290,10 +290,11 @@ class Crawler:
             workers = [asyncio.Task(self.work(), loop=self.loop)
                        for _ in range(self.max_tasks)]
             self.t0 = time.time()
-            yield from self.q.join()
-            self.t1 = time.time()
+            # yield from asyncio.gather(*workers, loop=self.loop, return_exceptions=True)
+            yield from router.quit_event.wait()
             for w in workers:
                 w.cancel()
+            self.t1 = time.time()
         except asyncio.CancelledError:
             LOGGER.warning('canceling the crawler')
         finally:

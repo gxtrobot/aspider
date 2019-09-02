@@ -3,6 +3,7 @@ routing logic and some tools
 '''
 import logging
 from functools import wraps
+import asyncio
 import re
 import inspect
 from urllib.parse import urlparse, urljoin
@@ -38,6 +39,15 @@ class Router:
 
     def __init__(self):
         self.routes = {}
+
+    def stop(self):
+        self.quit_event.set()
+
+    def resume(self, loop):
+        self.quit_event = asyncio.Event(loop=loop)
+    
+    def is_running(self):
+        return not self.quit_event.is_set()
 
     def add_root_path(self, root_path):
         self.root_path = root_path
