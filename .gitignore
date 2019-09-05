@@ -46,3 +46,7 @@ output/
 
 # vscode
 .vscode
+.DS_Store
+
+# build
+dist/

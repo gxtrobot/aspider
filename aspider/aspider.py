@@ -9,7 +9,6 @@ import argparse
 import asyncio
 import logging
 import sys
-import nest_asyncio
 from . import crawling
 from . import reporting
 from . import routeing
@@ -113,7 +112,6 @@ def main(loop=None):
     loop.set_exception_handler(exception_handler)
 
     roots = {fix_url(root) for root in args.roots}
-    # nest_asyncio.apply(loop)
 
     crawler = crawling.Crawler(roots,
                                exclude=args.exclude,
