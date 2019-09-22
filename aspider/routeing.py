@@ -45,11 +45,15 @@ class Router:
 
     def resume(self, loop):
         self.quit_event = asyncio.Event(loop=loop)
-    
+
     def is_running(self):
         return not self.quit_event.is_set()
 
     def add_root_path(self, root_path):
+        url_parts = urlparse(root_path)
+        if url_parts.path:
+            pos = root_path.index(url_parts.path)
+            root_path = root_path[:pos]
         self.root_path = root_path
 
     def _replace_tokens(self, rule):
@@ -89,7 +93,7 @@ class Router:
     def match(self, url):
         '''
         find mated pattern return key, value pairs
-        match /hello/jun to {'name', 'jun'} 
+        match /hello/jun to {'name', 'jun'}
 
         Returns:
             tuple -> (route, args_dict)
@@ -130,8 +134,6 @@ class Router:
         check if link is allowed in router
         '''
         path = self.get_url_path(url)
-        if path == '' or path == '/':
-            return True
         for pattern in self.routes:
             match = re.match(pattern, path)
             if match:
@@ -178,7 +180,7 @@ class Route:
 
     def verify(self, path, **kwargs):
         '''
-        Args: 
+        Args:
             path -> url remove root part
         '''
         verify_func = self.verify_func

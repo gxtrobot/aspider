@@ -74,12 +74,14 @@ def exception_handler(loop, context):
         except:
             pass
 
+
 async def do_async_report(router, crawler):
     await router.quit_event.wait()
     await asyncio.sleep(1)
     reporting.report(crawler)
 
-def main(loop=None):
+
+def main(loop=None, no_parse_links=False):
     """Main program.
 
     Parse arguments, set up event loop, run crawler, print report.
@@ -119,7 +121,8 @@ def main(loop=None):
                                max_redirect=args.max_redirect,
                                max_tries=args.max_tries,
                                max_tasks=args.max_tasks,
-                               loop=loop
+                               loop=loop,
+                               no_parse_links=no_parse_links
                                )
     if out_loop:
         asyncio.ensure_future(crawler.crawl(), loop=loop)

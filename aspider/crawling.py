@@ -52,7 +52,7 @@ class Crawler:
     def __init__(self, roots,
                  exclude=None, strict=True,  # What to crawl.
                  max_redirect=10, max_tries=4,  # Per-url limits.
-                 max_tasks=10, *, loop=None):
+                 max_tasks=10, *, loop=None, no_parse_links=False):
         self.loop = loop or asyncio.get_event_loop()
         self.roots = roots
         self.exclude = exclude
@@ -65,6 +65,7 @@ class Crawler:
         self.done = []
         self.session = aiohttp.ClientSession(loop=self.loop)
         self.root_domains = set()
+        self.no_parse_links = no_parse_links
         for root in roots:
             parts = urllib.parse.urlparse(root)
             host, port = urllib.parse.splitport(parts.netloc)
@@ -126,7 +127,7 @@ class Crawler:
 
     def parse_text(self, url, text):
         '''
-        call callback func on route 
+        call callback func on route
         '''
         route, args = router.match(url)
         if route:
@@ -239,14 +240,22 @@ class Crawler:
             else:
                 stat, links = yield from self.parse_links(response)
                 self.record_statistic(stat)
-                for link in links.difference(self.seen_urls):
-                    # use router to verify links
-                    if router.verify_url(link):
-                        self.q.put_nowait((link, self.max_redirect))
-                self.seen_urls.update(links)
+                # disable parse links
+                if not self.no_parse_links:
+                    for link in links.difference(self.seen_urls):
+                        # use router to verify links
+                        if router.verify_url(link):
+                            self.q.put_nowait((link, self.max_redirect))
+                    self.seen_urls.update(links)
         finally:
             yield from asyncio.sleep(1)
             yield from response.release()
+            self.exit_on_empty_queue()
+
+    def exit_on_empty_queue(self):
+        if self.q.qsize() == 0:
+            LOGGER.warn('empty queue, now quit')
+            router.stop()
 
     @asyncio.coroutine
     def work(self):
