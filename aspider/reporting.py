@@ -1,6 +1,7 @@
 """Reporting subsystem for web crawler."""
 
 import time
+import io
 
 
 class Stats:
@@ -8,16 +9,33 @@ class Stats:
 
     def __init__(self):
         self.stats = {}
+        self.summary = {}
+        self.strbuff = io.StringIO()
 
     def add(self, key, count=1):
         self.stats[key] = self.stats.get(key, 0) + count
 
     def report(self, file=None):
+        print('*** Report ***', file=file)
+
+        self.strbuff.seek(0)
+        print(self.strbuff.read())
+
         for key, count in sorted(self.stats.items()):
             print('%10d' % count, key, file=file)
 
+        print('Finished', self.summary['finished'],
+              'urls in %.3f secs' % self.summary['used_time'],
+              '(max_tasks=%d)' % self.summary['max_tasks'],
+              '(%.3f urls/sec/task)' % self.summary['speed'],
+              file=file)
+        print('Todo:', self.summary['todo'], file=file)
+        print('Done:', self.summary['finished'], file=file)
+        print('Date:', self.summary['date'], 'local time', file=file)
+        print("\n*** ALL DOWN NOW ***\n")
 
-def report(crawler, file=None):
+
+def gen_report(crawler):
     """Print a report on all completed URLs."""
     t1 = crawler.t1 or time.time()
     dt = t1 - crawler.t0
@@ -26,23 +44,21 @@ def report(crawler, file=None):
     else:
         speed = 0
     stats = Stats()
-    print('*** Report ***', file=file)
     try:
         show = list(crawler.done)
         show.sort(key=lambda _stat: str(_stat.url))
         for stat in show:
-            url_report(stat, stats, file=file)
+            url_report(stat, stats, file=stats.strbuff)
     except KeyboardInterrupt:
         print('\nInterrupted', file=file)
-    print('Finished', len(crawler.done),
-          'urls in %.3f secs' % dt,
-          '(max_tasks=%d)' % crawler.max_tasks,
-          '(%.3f urls/sec/task)' % speed,
-          file=file)
-    stats.report(file=file)
-    print('Todo:', crawler.q.qsize(), file=file)
-    print('Done:', len(crawler.done), file=file)
-    print('Date:', time.ctime(), 'local time', file=file)
+
+    stats.summary['finished'] = len(crawler.done)
+    stats.summary['used_time'] = dt
+    stats.summary['max_tasks'] = crawler.max_tasks
+    stats.summary['speed'] = speed
+    stats.summary['todo'] = crawler.q.qsize()
+    stats.summary['date'] = time.ctime()
+    return stats
 
 
 def url_report(stat, stats, file=None):

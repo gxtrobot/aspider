@@ -3,11 +3,11 @@
 import asyncio
 import cgi
 from collections import namedtuple
-import logging
 import re
 import time
 import urllib.parse
 from . import routeing
+from .util import logger
 try:
     # Python 3.4.
     from asyncio import JoinableQueue as Queue
@@ -17,7 +17,6 @@ except ImportError:
 
 import aiohttp  # Install with "pip install aiohttp".
 
-LOGGER = logging.getLogger(__name__)
 router = routeing.get_router()
 
 
@@ -50,16 +49,22 @@ class Crawler:
     """
 
     def __init__(self, roots,
-                 exclude=None, strict=True,  # What to crawl.
-                 max_redirect=10, max_tries=4,  # Per-url limits.
-                 max_tasks=10, *, loop=None, no_parse_links=False):
+                 # What to crawl.
+                 exclude=None, include=None, output=None, strict=True, count=None,
+                 proxy=None, max_redirect=10, max_tries=4,  # Per-url limits.
+                 max_tasks=10, loop=None, no_parse_links=False):
         self.loop = loop or asyncio.get_event_loop()
         self.roots = roots
         self.exclude = exclude
+        self.include = include
+        self.output = output
+        self.count = count
         self.strict = strict
+        self.proxy = proxy
         self.max_redirect = max_redirect
         self.max_tries = max_tries
         self.max_tasks = max_tasks
+        self.task_exit_counter = 0
         self.q = Queue(loop=self.loop)
         self.seen_urls = set()
         self.done = []
@@ -156,7 +161,7 @@ class Crawler:
                 urls = set(re.findall(r'''(?i)href=["']([^\s"'<>]+)''',
                                       text))
                 if urls:
-                    LOGGER.debug('got %r distinct urls from %r',
+                    logger.debug('got %r distinct urls from %r',
                                  len(urls), response.url)
                 for url in urls:
                     normalized = urllib.parse.urljoin(str(response.url), url)
@@ -188,21 +193,21 @@ class Crawler:
         while tries < self.max_tries:
             try:
                 response = yield from self.session.get(
-                    url, allow_redirects=False)
+                    url, allow_redirects=False, proxy=self.proxy)
 
                 if tries > 1:
-                    LOGGER.info('try %r for %r success', tries, url)
+                    logger.info('try %r for %r success', tries, url)
 
                 break
             except aiohttp.ClientError as client_error:
-                LOGGER.info('try %r for %r raised %r',
+                logger.info('try %r for %r raised %r',
                             tries, url, client_error)
                 exception = client_error
 
             tries += 1
         else:
             # We never broke out of the loop: all tries failed.
-            LOGGER.error('%r failed after %r tries',
+            logger.error('%r failed after %r tries',
                          url, self.max_tries)
             self.record_statistic(FetchStatistic(url=url,
                                                  next_url=None,
@@ -232,10 +237,10 @@ class Crawler:
                 if next_url in self.seen_urls:
                     return
                 if max_redirect > 0:
-                    LOGGER.info('redirect to %r from %r', next_url, url)
+                    logger.info('redirect to %r from %r', next_url, url)
                     self.add_url(next_url, max_redirect - 1)
                 else:
-                    LOGGER.error('redirect limit reached for %r from %r',
+                    logger.error('redirect limit reached for %r from %r',
                                  next_url, url)
             else:
                 stat, links = yield from self.parse_links(response)
@@ -244,17 +249,22 @@ class Crawler:
                 if not self.no_parse_links:
                     for link in links.difference(self.seen_urls):
                         # use router to verify links
-                        if router.verify_url(link):
+                        if self.verify_url(link) or router.verify_url(link):
                             self.q.put_nowait((link, self.max_redirect))
                     self.seen_urls.update(links)
         finally:
             yield from asyncio.sleep(1)
             yield from response.release()
-            self.exit_on_empty_queue()
 
+    @asyncio.coroutine
     def exit_on_empty_queue(self):
+        if self.count and len(self.done) >= self.count:
+            logger.warning(f'reach count: {self.count}, now quit')
+            router.stop()
+
         if self.q.qsize() == 0:
-            LOGGER.warn('empty queue, now quit')
+            logger.warning('empty queue, now quit')
+            yield from self.q.join()
             router.stop()
 
     @asyncio.coroutine
@@ -263,34 +273,47 @@ class Crawler:
         try:
             while router.is_running():
                 url, max_redirect = yield from self.q.get()
-                print(f'work on url {url}')
+                logger.debug(f'work on url {url}')
                 assert url in self.seen_urls
                 yield from self.fetch(url, max_redirect)
                 self.q.task_done()
+                yield from self.exit_on_empty_queue()
+
         except asyncio.CancelledError:
-            LOGGER.warning('canceling the worker')
+            logger.warning('canceling the worker')
 
     def url_allowed(self, url):
-        if self.exclude and re.search(self.exclude, url):
-            return False
         parts = urllib.parse.urlparse(url)
         if parts.scheme not in ('http', 'https'):
-            LOGGER.debug('skipping non-http scheme in %r', url)
+            # logger.debug('skipping non-http scheme in %r', url)
             return False
         host, port = urllib.parse.splitport(parts.netloc)
         if not self.host_okay(host):
-            LOGGER.debug('skipping non-root host in %r', url)
+            # logger.debug('skipping non-root host in %r', url)
             return False
         return True
+
+    def verify_url(self, url):
+        if self.include:
+            for pattern in self.include:
+                if re.search(pattern, url):
+                    logger.debug(
+                        f'{url} match include pattern: {pattern}, allowed')
+                    return True
+        if self.exclude and re.search(self.exclude, url):
+            logger.debug(
+                f'{url} match exclude pattern: {self.exclude}, rejected')
+            return False
+        # default False
+        return False
 
     def add_url(self, url, max_redirect=None):
         """Add a URL to the queue if not seen before."""
         if max_redirect is None:
             max_redirect = self.max_redirect
-        LOGGER.debug('adding %r %r', url, max_redirect)
+        logger.debug('adding %r %r', url, max_redirect)
         self.seen_urls.add(url)
         self.q.put_nowait((url, max_redirect))
-        print(self.q)
 
     @asyncio.coroutine
     def crawl(self):
@@ -305,7 +328,7 @@ class Crawler:
                 w.cancel()
             self.t1 = time.time()
         except asyncio.CancelledError:
-            LOGGER.warning('canceling the crawler')
+            logger.warning('canceling the crawler')
         finally:
-            LOGGER.warning('closing the crawler')
+            logger.warning('closing the crawler')
             yield from self.close()

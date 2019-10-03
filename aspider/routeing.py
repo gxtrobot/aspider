@@ -7,9 +7,9 @@ import asyncio
 import re
 import inspect
 from urllib.parse import urlparse, urljoin
+from .util import logger
 # from bottle import route
 # key-value map for url pattern -> process func mapping
-logger = logging.getLogger(__name__)
 default_router = None
 
 

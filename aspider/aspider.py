@@ -1,66 +1,75 @@
-#!/usr/bin/env python3.4
-
 """A simple web crawler -- main driver program."""
-
-# TODO:
-# - Add arguments to specify TLS settings (e.g. cert/key files).
 
 import argparse
 import asyncio
-import logging
 import sys
 from . import crawling
 from . import reporting
 from . import routeing
+from .util import logger, fix_url, TESTING
+import logging
 
-ARGS = argparse.ArgumentParser(description="Web crawler")
-ARGS.add_argument(
-    '--iocp', action='store_true', dest='iocp',
-    default=False, help='Use IOCP event loop (Windows only)')
-ARGS.add_argument(
-    '--select', action='store_true', dest='select',
-    default=False, help='Use Select event loop instead of default')
-ARGS.add_argument(
-    'roots', nargs='*',
-    default=[], help='Root URL (may be repeated)')
-ARGS.add_argument(
-    '--max_redirect', action='store', type=int, metavar='N',
-    default=10, help='Limit redirection chains (for 301, 302 etc.)')
-ARGS.add_argument(
-    '--max_tries', action='store', type=int, metavar='N',
-    default=4, help='Limit retries on network errors')
-ARGS.add_argument(
-    '--max_tasks', action='store', type=int, metavar='N',
-    default=10, help='Limit concurrent connections')
-ARGS.add_argument(
-    '--exclude', action='store', metavar='REGEX',
-    help='Exclude matching URLs')
-ARGS.add_argument(
-    '--strict', action='store_true',
-    default=True, help='Strict host matching (default)')
-ARGS.add_argument(
-    '--lenient', action='store_false', dest='strict',
-    default=False, help='Lenient host matching')
-ARGS.add_argument(
-    '-v', '--verbose', action='count', dest='level',
-    default=2, help='Verbose logging (repeat for more verbose)')
-ARGS.add_argument(
-    '-q', '--quiet', action='store_const', const=0, dest='level',
-    default=2, help='Only log errors')
+ARGS = argparse.ArgumentParser(prog='aspider', description="Web crawler")
 
 
-def fix_url(url):
-    """Prefix a schema-less URL with http://."""
-    if '://' not in url:
-        url = 'http://' + url
-    return url
+def setup_arg_parse():
+    ARGS.add_argument(
+        'roots', nargs='*',
+        default=[], help='Root URL (may be repeated)')
+    ARGS.add_argument(
+        '--max_redirect', action='store', type=int, metavar='N',
+        default=10, help='Limit redirection chains (for 301, 302 etc.)')
+    ARGS.add_argument(
+        '--max_tries', action='store', type=int, metavar='N',
+        default=4, help='Limit retries on network errors')
+    ARGS.add_argument(
+        '--max_tasks', action='store', type=int, metavar='N',
+        default=5, help='Limit concurrent connections')
+    ARGS.add_argument(
+        '-p', '--proxy', action='store', help='proxy to use for requesting')
+    ARGS.add_argument(
+        '-i', '--include', action='append', metavar='INCLUDE_REGEX',
+        help='Include matching URLs')
+    ARGS.add_argument(
+        '-e', '--exclude', action='append', metavar='EXCLUDE_REGEX',
+        help='Exclude matching URLs')
+    ARGS.add_argument(
+        '-o', '--output', action='store',
+        help='output method to use ')
+    ARGS.add_argument(
+        '-c', '--count', action='store',
+        help='limit count of urls to get')
+    ARGS.add_argument(
+        '--nostrict', action='store_false', dest='strict', help='Strict host matching (default)')
+    ARGS.add_argument(
+        '--no_parse_links', action='store_true', help='disable parsing links ')
+    ARGS.add_argument(
+        '-v', '--verbose', action='count', dest='level',
+        default=1, help='Verbose logging (repeat for more verbose)')
+    ARGS.add_argument(
+        '-q', '--quiet', action='store_const', const=0, dest='level',
+        default=1, help='Only log errors')
+
+
+def parse_args():
+    args, unkown = ARGS.parse_known_args()
+    logger.debug(args)
+    if not args.roots:
+        print('Use --help for command line help')
+        return
+    if TESTING:
+        args.roots = []
+    levels = [logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG]
+    logging.basicConfig(level=levels[min(args.level, len(levels)-1)])
+    return args
 
 
 def exception_handler(loop, context):
     # first, handle with default handler
     loop.default_exception_handler(context)
-    print('handle exception')
+    logger.debug('handle exception')
     exception = context.get('exception')
+    logger.exception(exception)
     errors = (KeyboardInterrupt, ReachCountExit)
     if isinstance(exception, errors):
         print(context)
@@ -81,35 +90,31 @@ async def do_async_report(router, crawler):
     reporting.report(crawler)
 
 
-def main(loop=None, no_parse_links=False):
-    """Main program.
-
-    Parse arguments, set up event loop, run crawler, print report.
+def download(loop=None, extra_args=None):
     """
-    out_loop = True if loop else False
-    args = ARGS.parse_args()
-    if not args.roots:
-        print('Use --help for command line help')
-        return
-    levels = [logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG]
-    logging.basicConfig(level=levels[min(args.level, len(levels)-1)])
+    download links
+    Parse arguments, set up event loop, run crawler, print report.
 
+    Args:
+        loop:EventLoop  -> eventloop to use for asyncio
+        no_parse_links: bool -> disable parsing links
+        extra_args: dict -> other args to use, or override default value
+    """
+    args = parse_args()
+    stats_report = None
+    if extra_args:
+        for key in extra_args:
+            setattr(args, key, extra_args[key])
+    logger.debug(args)
+    out_loop = True if loop else False
     root_path = args.roots[0]
     router = routeing.get_router()
-    logging.debug('resume the loop')
+    logger.debug('resume the loop')
     router.resume(loop)
     router.add_root_path(root_path)
-    logging.debug(f'set up router with root_path {root_path}')
+    logger.debug(f'set up router with root_path {root_path}')
     if not loop:
-        if args.iocp:
-            from asyncio.windows_events import ProactorEventLoop
-            loop = ProactorEventLoop()
-            asyncio.set_event_loop(loop)
-        elif args.select:
-            loop = asyncio.SelectorEventLoop()
-            asyncio.set_event_loop(loop)
-        else:
-            loop = asyncio.get_event_loop()
+        loop = asyncio.get_event_loop()
 
     loop.set_exception_handler(exception_handler)
 
@@ -117,12 +122,16 @@ def main(loop=None, no_parse_links=False):
 
     crawler = crawling.Crawler(roots,
                                exclude=args.exclude,
+                               include=args.include,
+                               output=args.output,
+                               count=args.count,
+                               proxy=args.proxy,
                                strict=args.strict,
                                max_redirect=args.max_redirect,
                                max_tries=args.max_tries,
                                max_tasks=args.max_tasks,
                                loop=loop,
-                               no_parse_links=no_parse_links
+                               no_parse_links=args.no_parse_links
                                )
     if out_loop:
         asyncio.ensure_future(crawler.crawl(), loop=loop)
@@ -134,9 +143,8 @@ def main(loop=None, no_parse_links=False):
             # sys.stderr.flush()
             pass
         finally:
-            reporting.report(crawler)
-            print('ALL DONE NOW')
+            stats_report = reporting.gen_report(crawler)
+    return stats_report
 
 
-if __name__ == '__main__':
-    main()
+setup_arg_parse()
