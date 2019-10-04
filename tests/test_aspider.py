@@ -1,3 +1,4 @@
+import json
 from aspider import aspider
 
 
@@ -84,3 +85,42 @@ def test_args5():
     }
     stats_report = aspider.download(extra_args=extra_args)
     stats_report.report()
+
+
+def test_args6():
+    '''
+    test quit when reach count limit
+    '''
+    roots = ['https://www.cdnbus.bid', ]
+    extra_args = {
+        'roots': roots,
+        'count': 5,
+        'include': ['/[A-Z]+-[0-9]+'],
+        'output': 'txt'
+    }
+    stats_report = aspider.download(extra_args=extra_args)
+    stats_report.report()
+
+
+def test_args7():
+    '''
+    test write json
+    '''
+    roots = ['https://www.cdnbus.bid', ]
+    extra_args = {
+        'roots': roots,
+        'count': 5,
+        'include': ['/[A-Z]+-[0-9]+'],
+        'output': 'json'
+    }
+    stats_report = aspider.download(extra_args=extra_args)
+    stats_report.report()
+
+
+def test_read_json():
+    f_name = 'www.cdnbus.bid-2019-10-04 09:49:18.json'
+    with open(f_name) as f:
+        content = f.readlines()
+        for line in content:
+            item = json.loads(line)
+            print(item['url'], item['datetime'])

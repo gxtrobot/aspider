@@ -2,12 +2,15 @@
 
 import asyncio
 import cgi
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 import re
 import time
+import sys
 import urllib.parse
+import datetime
 from . import routeing
-from .util import logger
+from . import outputing
+from .util import logger, now_time
 try:
     # Python 3.4.
     from asyncio import JoinableQueue as Queue
@@ -58,7 +61,7 @@ class Crawler:
         self.exclude = exclude
         self.include = include
         self.output = output
-        self.count = count
+        self.count = int(count) if count else None
         self.strict = strict
         self.proxy = proxy
         self.max_redirect = max_redirect
@@ -88,6 +91,7 @@ class Crawler:
             self.add_url(root)
         self.t0 = time.time()
         self.t1 = None
+        self.output_file = self.get_file()
 
     @asyncio.coroutine
     def close(self):
@@ -172,6 +176,9 @@ class Crawler:
                 # parse text
                 self.parse_text(str(response.url), text)
 
+                # do outing
+                self.handle_output(str(response.url), text)
+
         stat = FetchStatistic(
             url=response.url,
             next_url=None,
@@ -184,6 +191,29 @@ class Crawler:
             num_new_urls=len(links - self.seen_urls))
 
         return stat, links
+
+    def handle_output(self, url, text):
+        if self.output:
+            d = OrderedDict()
+            d['url'] = url
+            d['text'] = text
+            d['datetime'] = now_time()
+            logger.info(f'write item: {url}')
+            outputing.do_write(self.output, d, self.output_file)
+
+    def get_file(self):
+        '''
+        generate a file name for output
+        '''
+        domains = list(self.root_domains)
+        dt = datetime.datetime.now()
+        dt_str = dt.strftime('%Y-%m-%d %H:%M:%S')
+        f_name = f'{domains[0]}-{dt_str}'
+        if self.output:
+            if self.output == 'stream':
+                return None
+            f_name += f'.{self.output}'
+        return f_name
 
     @asyncio.coroutine
     def fetch(self, url, max_redirect):
@@ -252,6 +282,8 @@ class Crawler:
                         if self.verify_url(link) or router.verify_url(link):
                             self.q.put_nowait((link, self.max_redirect))
                     self.seen_urls.update(links)
+        except Exception as ex:
+            logger.exception(ex)
         finally:
             yield from asyncio.sleep(1)
             yield from response.release()

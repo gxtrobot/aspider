@@ -4,6 +4,7 @@ some helper funcs like logging set up
 
 import logging
 import os
+import datetime
 
 logger = logging.getLogger("aspider")
 TESTING = False
@@ -30,6 +31,12 @@ def fix_url(url):
     if '://' not in url:
         url = 'http://' + url
     return url
+
+
+def now_time():
+    fmt = '%Y-%m-%d %H:%M:%S'
+    now = datetime.datetime.now().strftime(fmt)
+    return now
 
 
 def init():

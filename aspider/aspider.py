@@ -35,7 +35,7 @@ def setup_arg_parse():
         help='Exclude matching URLs')
     ARGS.add_argument(
         '-o', '--output', action='store',
-        help='output method to use ')
+        help='output method to use [txt, csv, json, stream] ')
     ARGS.add_argument(
         '-c', '--count', action='store',
         help='limit count of urls to get')
@@ -53,14 +53,14 @@ def setup_arg_parse():
 
 def parse_args():
     args, unkown = ARGS.parse_known_args()
-    logger.debug(args)
+    print(args)
     if not args.roots:
         print('Use --help for command line help')
         return
     if TESTING:
         args.roots = []
     levels = [logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG]
-    logging.basicConfig(level=levels[min(args.level, len(levels)-1)])
+    logger.setLevel(levels[min(args.level, len(levels)-1)])
     return args
 
 
