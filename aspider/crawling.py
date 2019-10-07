@@ -279,7 +279,7 @@ class Crawler:
                 if not self.no_parse_links:
                     for link in links.difference(self.seen_urls):
                         # use router to verify links
-                        if self.verify_url(link) or router.verify_url(link):
+                        if self.verify_url(link) or router.verify_url(link, url):
                             self.q.put_nowait((link, self.max_redirect))
                     self.seen_urls.update(links)
         except Exception as ex:

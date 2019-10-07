@@ -32,7 +32,7 @@ class Stats:
         print('Todo:', self.summary['todo'], file=file)
         print('Done:', self.summary['finished'], file=file)
         print('Date:', self.summary['date'], 'local time', file=file)
-        print("\n*** ALL DOWN NOW ***\n")
+        print("\n*** ALL DONE NOW ***\n")
 
 
 def gen_report(crawler):

@@ -1,7 +1,6 @@
 '''
 routing logic and some tools
 '''
-import logging
 from functools import wraps
 import asyncio
 import re
@@ -129,28 +128,48 @@ class Router:
         full_url = urljoin(root_path, path)
         return full_url
 
-    def verify_url(self, url):
+    def verify_url(self, url, out_url):
         '''
         check if link is allowed in router
+
+        Args:
+            url: str -> url to verify
+            out_url: str -> page include url
         '''
+        out_path = self.get_url_path(out_url)
+        out_match = self.find_route(out_path)
+        if out_match:
+            out_route, _ = out_match
+            if out_route.no_parse_links:
+                logger.debug(
+                    f'out path {out_url} disable parse link:{url}')
+                return False
         path = self.get_url_path(url)
-        for pattern in self.routes:
-            match = re.match(pattern, path)
-            if match:
-                # check if any verify_func defined
-                route = self.routes[pattern]
-                args_dict = match.groupdict()
-                if route.verify(path, **args_dict):
-                    logger.debug(f'verify_url:{path} with route:{route}')
-                    return True
+        match = self.find_route(path)
+        # check if any verify_func defined
+        if match:
+            route, args_dict = match
+            if route.verify(path, **args_dict):
+                logger.debug(f'verify_url:{path} with route:{route}')
+                return True
         logger.debug(f'not verify_url:{path}')
         return False
 
-    def route(self, rule, verify_func=None):
+    def find_route(self, path):
+        for pattern in self.routes:
+            match = re.match(pattern, path)
+            if match:
+                route = self.routes[pattern]
+                args_dict = match.groupdict()
+                return route, args_dict
+        return None
+
+    def route(self, rule, verify_func=None, no_parse_links=False):
         def decorator(callback):
             # add rule to router
             replaced = self._replace_tokens(rule)
-            route = Route(self, rule, callback, verify_func)
+            route = Route(self, rule, callback,
+                          verify_func=verify_func, no_parse_links=no_parse_links)
             self.routes[replaced] = route
             return callback
         return decorator
@@ -161,11 +180,12 @@ class Route:
     wrapper for callback and url verify func
     '''
 
-    def __init__(self, router, rule, callback, verify_func=None):
+    def __init__(self, router, rule, callback, verify_func=None, no_parse_links=False):
         self.router = router
         self.rule = rule
         self.callback = callback
         self.verify_func = verify_func
+        self.no_parse_links = no_parse_links
 
     def __repr__(self):
         s = f'<Route {self.rule}>'

@@ -6,10 +6,12 @@ import sys
 from . import crawling
 from . import reporting
 from . import routeing
+from . import __version__
 from .util import logger, fix_url, TESTING
 import logging
 
-ARGS = argparse.ArgumentParser(prog='aspider', description="Web crawler")
+ARGS = argparse.ArgumentParser(
+    prog='aspider', description=f"An Asyncio Web crawler, version: {__version__}")
 
 
 def setup_arg_parse():
@@ -53,10 +55,10 @@ def setup_arg_parse():
 
 def parse_args():
     args, unkown = ARGS.parse_known_args()
-    print(args)
+    logger.debug('default args: %s', args)
     if not args.roots:
         print('Use --help for command line help')
-        return
+        sys.exit(1)
     if TESTING:
         args.roots = []
     levels = [logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG]
@@ -70,7 +72,7 @@ def exception_handler(loop, context):
     logger.debug('handle exception')
     exception = context.get('exception')
     logger.exception(exception)
-    errors = (KeyboardInterrupt, ReachCountExit)
+    errors = (KeyboardInterrupt,)
     if isinstance(exception, errors):
         print(context)
         print('now exit loop')
@@ -87,7 +89,8 @@ def exception_handler(loop, context):
 async def do_async_report(router, crawler):
     await router.quit_event.wait()
     await asyncio.sleep(1)
-    reporting.report(crawler)
+    stats = reporting.gen_report(crawler)
+    stats.report()
 
 
 def download(loop=None, extra_args=None):
@@ -106,6 +109,7 @@ def download(loop=None, extra_args=None):
         for key in extra_args:
             setattr(args, key, extra_args[key])
     logger.debug(args)
+    print('args : ', args)
     out_loop = True if loop else False
     root_path = args.roots[0]
     router = routeing.get_router()
