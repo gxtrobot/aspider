@@ -36,7 +36,7 @@ setup(
     include_package_data=True,
     author='gxtrobot',
     python_requires=">=3.6",
-    install_requires=["aiohttp"],
+    install_requires=["aiohttp", "requests_html"],
     dependency_links=dependency_links,
     author_email='gxtrobot@gmail.com',
     entry_points={"console_scripts": ["aspider = aspider.__main__:main"]},
