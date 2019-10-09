@@ -19,6 +19,8 @@ except ImportError:
     from asyncio import Queue
 
 import aiohttp  # Install with "pip install aiohttp".
+from requests_html import HTML
+
 
 router = routeing.get_router()
 
@@ -194,12 +196,19 @@ class Crawler:
 
     def handle_output(self, url, text):
         if self.output:
-            d = OrderedDict()
-            d['url'] = url
-            d['text'] = text
-            d['datetime'] = now_time()
+            d = self.parse_output(url, text)
             logger.info(f'write item: {url}')
             outputing.do_write(self.output, d, self.output_file)
+
+    def parse_output(self, url, text):
+        html = HTML(html=text)
+        title_ele = html.find('title', first=True)
+        d = OrderedDict()
+        d['title'] = title_ele.text
+        d['url'] = url
+        d['datetime'] = now_time()
+        d['text'] = text
+        return d
 
     def get_file(self):
         '''

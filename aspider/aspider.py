@@ -103,6 +103,8 @@ def download(loop=None, extra_args=None):
         no_parse_links: bool -> disable parsing links
         extra_args: dict -> other args to use, or override default value
     """
+    if extra_args:
+        sys.argv.extend(extra_args.get('roots', []))
     args = parse_args()
     stats_report = None
     if extra_args:
