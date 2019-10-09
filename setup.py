@@ -22,6 +22,7 @@ setup(
     version=__version__,
     description='a spider using asyncio',
     long_description=long_description,
+    long_description_content_type='text/markdown',
     url='https://github.com/gxtrobot/aspider',
     download_url='https://github.com/gxtrobot/aspider/tarball/' + __version__,
     license='BSD',
