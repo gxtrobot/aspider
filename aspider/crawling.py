@@ -161,7 +161,7 @@ class Crawler:
 
             encoding = pdict.get('charset', 'utf-8')
             if content_type in ('text/html', 'application/xml'):
-                text = yield from response.text()
+                text = yield from response.text(errors='ignore')
 
                 # Replace href with (?:href|src) to follow image links.
                 urls = set(re.findall(r'''(?i)href=["']([^\s"'<>]+)''',
@@ -292,6 +292,7 @@ class Crawler:
                             self.q.put_nowait((link, self.max_redirect))
                     self.seen_urls.update(links)
         except Exception as ex:
+            logger.error(f'parse error: {url}')
             logger.exception(ex)
         finally:
             yield from asyncio.sleep(1)
