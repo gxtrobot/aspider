@@ -1,5 +1,11 @@
 ## aspider
-    一个简单好用的Python 异步爬虫
+    一个简单好用的Python 异步爬虫, 你只要需要做两件事就能编写一个爬虫
+- 发现新链接(提供一个匹配新链接正则表达式)
+- 提供一个页面内容处理函数
+
+## 新手快速上手教程
+- [文档](./docs/aspider_lesson.md) [pdf]((./docs/aspider_lesson.pdf))
+- [视频](https://www.bilibili.com/video/av74316859/)
 
 ## 简介
 
